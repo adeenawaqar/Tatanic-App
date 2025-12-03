@@ -1,11 +1,8 @@
 import streamlit as st
 import pandas as pd
-import pickle
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder
 import numpy as np
-
-# Load the trained model
-with open('logistic_regression_titanic.pkl', 'rb') as f:
-    model = pickle.load(f)
 
 st.title("Titanic Survival Prediction App")
 st.write("Enter passenger details below to predict survival:")
@@ -33,12 +30,22 @@ input_data = pd.DataFrame({
     'Embarked': [embarked]
 })
 
+# --- Simple Logistic Regression Model Definition ---
+# Example: dummy coefficients for demonstration (replace with real model if needed)
+# Features order: Pclass, Sex, Age, SibSp, Parch, Fare, Embarked
+model = LogisticRegression()
+model.coef_ = np.array([[ -1.0, 1.5, -0.03, -0.2, -0.1, 0.01, 0.3]])
+model.intercept_ = np.array([0.5])
+model.classes_ = np.array([0, 1])
+
 # --- Prediction ---
 if st.button("Predict Survival"):
-    prediction = model.predict(input_data)[0]
-    probability = model.predict_proba(input_data)[0][1]
+    # Logistic function manually
+    z = np.dot(input_data.values, model.coef_.T) + model.intercept_
+    prob = 1 / (1 + np.exp(-z))
+    prediction = (prob >= 0.5).astype(int)[0][0]
     
     if prediction == 1:
-        st.success(f"The passenger **survived** with probability {probability:.2f}")
+        st.success(f"The passenger **survived** with probability {prob[0][0]:.2f}")
     else:
-        st.error(f"The passenger **did not survive** with probability {1-probability:.2f}")
+        st.error(f"The passenger **did not survive** with probability {1-prob[0][0]:.2f}")
